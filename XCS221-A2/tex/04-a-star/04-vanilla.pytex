@@ -1,0 +1,15 @@
+\item \points{4d}
+
+Recall that heuristics are most effective when they are equal to the future cost. Consider a $n \times n$ grid map (|createGridMap|) where the start and end are at the opposite corners; for $n = 10$, we would have |startLocation = "0,0"|, |endTag = "label=9,9"|.
+
+Provide a concrete example of $n$ |waypointTags| so that running A* with the |NoWaypointsHeuristic| results in the same running time complexity as solving the relaxed shortest path problem.
+
+\textbf{What we expect: } An example of $n$ |waypointTags| that satisfies the constraints of the question.
+
+🐍
+import re
+with open('submission.tex') as f: print((re.search(r'% <SCPD_SUBMISSION_TAG>_4d(.*?)% <SCPD_SUBMISSION_TAG>_4d', f.read(), re.DOTALL)).group(1))
+🐍
+
+
+

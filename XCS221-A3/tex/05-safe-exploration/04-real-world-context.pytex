@@ -1,0 +1,21 @@
+\item \points{5d}
+
+The concept of safe exploration in RL extends to other real-world contexts where some amount of learning through trial and error might be expected. One example of this is clinical research:  conducting epsilon-greedy exploration examining the effects of a drug that has serious or fatal side effects may harm a lot of people and be ethically questionable. For example, one of the most notorious cases of abuse in clinical trials was the Tuskegee Syphilis Study conducted between 1932 and 1972 by the US Public Health Service and the CDC. During the study, 400 African American men with Syphilis were not treated so that researchers could study the progression of the disease, costing many of these individuals their lives. As a result, ethical guidelines have been put in place to guide research involving human-beings, like clinical research. Many of these guidelines apply to other research contexts beyond medicine. In many ways, these guardrails for science are similar to the constraints you set for Mountain Car to keep its velocity within a safe range. 
+
+  The Belmont report, one of the list of guidelines for conducting human-subjects research that arose after the Tuskegee Syphilis Study, lists three principles: Respect for Persons, Beneficence, and Justice. In 2012, the US Department of Homeland Security applied these principles to describe how to conduct ethical information and communication technology research in the Menlo Report. The principles are as follows:
+  \begin{itemize}
+      \item \textbf{Respect for persons:} Participation as a research subject is voluntary, and follows from informed consent; Treat individuals as autonomous agents and respect their right to determine their own best interests; Respect individuals who are not targets of research yet are impacted; Individuals with diminished autonomy, who are incapable of deciding for themselves, are entitled to protection.
+      \item \textbf{Beneficence:} Do not harm; Maximize probably benefits and minimize probable harms; Systematically assess both risk of harm and benefit.
+      \item \textbf{Justice:} Each person deserves equal consideration in how to be treated, and the benefits of research should be fairly distributed according to individual need, effort, societal consideration, and merit; Selection of subjects should be fair, and burdens should be allocated equitably across impacted subjects.
+      \item \textbf{Respect for Law and Public Interest:} Engage in legal due diligence; Be transparent in methods and results; Be accountable for actions.
+  \end{itemize}
+Imagine a company is working on testing and improving their autonomous driving technology through RL. They want to run their experiments on streets in residential neighborhoods. Describe an MDP (specifically define $\text{States}$, $\text{Actions}(s)$, and $\text{Reward}(s, a, s')$) and a state exploration policy that would potentially cause harm to humans. Which of the 4 Menlo Report principles might be violated by running this experiment and why? Explain in 1-3 sentences.
+
+\textbf{What we expect:} Definition of an MDP's $\text{States}$, $\text{Actions(s)}$, and $\text{Reward(s, a, s')}$, a state exploration policy, and a relevant Menlo Report Principle that might be violated with an explanation.
+
+
+% FIX
+🐍
+import re
+with open('submission.tex') as f: print((re.search(r'% <SCPD_SUBMISSION_TAG>_5d(.*?)% <SCPD_SUBMISSION_TAG>_5d', f.read(), re.DOTALL)).group(1))
+🐍

@@ -1,0 +1,19 @@
+\item \points{4b}
+
+For Q-learning in continuous states, we need to use function approximation. The first step of function approximation is extracting 
+features given state. Feature extractors of different complexities work well with different problems: linear and polynomial feature 
+extractors that work well with simpler problems may not be suitable for other problems. For the mountain car task, we are going to use 
+a Fourier feature extractor. As background, any continuous periodic function can be approximated as a Fourier Series
+$$f(x) = \frac{a_0}{2} + \sum_{j=1}^n\left[a_j\cos(2\pi j x/T) + b_j\sin(2\pi j x/ T)\right]$$
+with $a_j$ and $b_j$ sequences of coefficients determined by integrating $f$. To apply this to Q-learning with function approximation,
+we want the learned weights $w$ to emulate $a_j$ and $b_j$ and the output of $\phi$ to provide the basis of varying sinusoid periods
+as seen in $\cos(2\pi j x/T)$ for $j = 1, 2, \ldots, n$.
+Thus, for state $s = [s_1, s_2, \ldots, s_k]$, action $a$, and maximum coefficient $c$, the feature extractor $\phi$ is:
+$$\phi(s, a, c) = [\cos(0), \cos(s_1), \ldots, \cos(s_k), \cos(2s_1), \cos(s_1+s_2), \ldots, \cos(cs_1 + cs_2 + \ldots + cs_k)]$$
+$$= \left\{\cos\left(\sum_{i=1}^k c_i s_i\right): \forall c_1\in\mathscr{C}, \ldots, c_k\in\mathscr{C}\right\}$$
+where $\mathscr{C} = \{0, 1, \ldots, c\}$ is the set of non-negative integers from 0 to $c$. Note that $\phi(s, a, c) \in \mathbb{R}^{(c+1)^k}$.
+
+Implement |fourierFeatureExtractor| in |submission.py|. Looking at |util.polynomialFeatureExtractor| may be useful
+for familiarizing oneself with numpy.
+
+
