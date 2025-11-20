@@ -26,6 +26,21 @@ def extractWordFeatures(x: str) -> FeatureVector:
     """
     pass
     # ### START CODE HERE ###
+    
+    # 1.Creation of the empty feature vector 'review_vector'
+    # 2.Split the input string at empty spaces
+    # 3.Iterate the dictionary, checking if the word is there
+    # If not, the word is introduced and the value is updated.
+    # If it is, only the value is updated (done with dict.get function)
+
+    review_phi = {}
+    words = x.split()
+
+    for w in words:
+        review_phi[w] = review_phi.get(w,0) + 1
+       
+    return (review_phi)
+    
     # ### END CODE HERE ###
 
 
