@@ -73,6 +73,20 @@ def learnPredictor(
     """
     weights = {}  # feature => weight
     # ### START CODE HERE ###
+    def predictor(x: T) -> int:
+        return 1 if dotProduct(featureExtractor(x), weights) >= 0 else -1
+
+    for epoch in range(numEpochs):
+        for x, y in trainExamples:
+            phi = featureExtractor(x)
+            margin = dotProduct(weights, phi) * y
+            if margin < 1:  # hinge-loss subgradient update
+                increment(weights, eta * y, phi)
+
+        # Monitor training progress.
+        trainError = evaluatePredictor(trainExamples, predictor)
+        validationError = evaluatePredictor(validationExamples, predictor)
+        print(f"Epoch {epoch}: train error = {trainError}, validation error = {validationError}")
     # ### END CODE HERE ###
     return weights
 
