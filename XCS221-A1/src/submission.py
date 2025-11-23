@@ -73,20 +73,28 @@ def learnPredictor(
     """
     weights = {}  # feature => weight
     # ### START CODE HERE ###
+
+    # If the Score (phi(x) . w) is exactly 0, output +1. Otherwise, output -1.
     def predictor(x: T) -> int:
         return 1 if dotProduct(featureExtractor(x), weights) >= 0 else -1
-
+    # Stochastic Gradient Descent:
+        #First, iterate over the number of epochs.(1....T or numEpochs)
+        #Then, iterate over each training example (x,y).
+        #After phi, the margin is computed. 
     for epoch in range(numEpochs):
         for x, y in trainExamples:
             phi = featureExtractor(x)
             margin = dotProduct(weights, phi) * y
-            if margin < 1:  # hinge-loss subgradient update
+            # If margin is less than 1, loss hinge is greater than 0, thereby not converged. So, update weights.
+            if margin < 1:  
+                # Update weights according to the formula.
                 increment(weights, eta * y, phi)
 
         # Monitor training progress.
         trainError = evaluatePredictor(trainExamples, predictor)
         validationError = evaluatePredictor(validationExamples, predictor)
         print(f"Epoch {epoch}: train error = {trainError}, validation error = {validationError}")
+
     # ### END CODE HERE ###
     return weights
 
@@ -110,9 +118,43 @@ def generateDataset(numExamples: int, weights: WeightVector) -> List[Example]:
 
     # Note that the weight vector can be arbitrary during testing.
     def generateExample() -> Tuple[Dict[str, int], int]:
-        phi = None
+        phi = None 
         y = None
         # ### START CODE HERE ###
+        phi = {} #Empty feature vector as a dictionary
+        keys = list(weights.keys())
+
+        if keys:
+            # choose a non-empty subset of features randomly
+            subset_size = random.randint(1, len(keys))
+            chosen_keys = random.sample(keys, subset_size)
+            for k in chosen_keys:
+                # random non-zero value to allow positive/negative scores
+                phi[k] = random.choice([-5, -4, -3, -2, -1, 1, 2, 3, 4, 5])
+
+            score = dotProduct(phi, weights)
+
+            """
+            #---------------------SCORE DEBUGGING------------------------
+            #Even though the phi and weights are non-zero, some errors
+            # may lead to zero score. This block is to debug such cases.
+            print("Score =", score)
+            # avoid zero score so label is well-defined
+            #check_zero_weights = 0 in weights.values()
+            #print(check_zero_weights)
+            if score == 0:
+                print("###############SCORE IS ZERO#################")
+                k0 = chosen_keys[0]
+                phi[k0] += 1 if weights[k0] >= 0 else -1
+                score = dotProduct(phi, weights)
+            #-----------------------------------------------------------
+            """
+
+            y = 1 if score >= 0 else -1
+        else:
+            # no weights: return empty features with positive label
+            phi = {}
+            y = 1
         # ### END CODE HERE ###
         return (phi, y)
 
