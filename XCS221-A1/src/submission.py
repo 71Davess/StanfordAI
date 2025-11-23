@@ -174,8 +174,15 @@ def extractCharacterFeatures(n: int) -> Callable[[str], FeatureVector]:
     """
 
     def extract(x):
-        pass
         # ### START CODE HERE ###
+        phi = {}
+        s = x.replace(" ", "") # Remove spaces from the string
+        # Iterate over the string to extract n-grams avoiding index errors
+        #The 'gram' variable stores the n-gram substring on phi update.
+        for i in range(len(s) - n + 1):
+            gram = s[i : i + n]
+            phi[gram] = phi.get(gram, 0) + 1
+        return phi
         # ### END CODE HERE ###
 
     return extract
