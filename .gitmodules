@@ -1,0 +1,3 @@
+[submodule "Course_Scripts/Course_Scripts/XCS22-Class-Examples"]
+	path = Course_Scripts/Course_Scripts/XCS22-Class-Examples
+	url = git@github.com:scpd-proed/XCS221-Class-Examples.git
