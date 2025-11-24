@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import random
+from collections import defaultdict
 from typing import Callable, Dict, List, Tuple, TypeVar, DefaultDict
 from util import *
 
@@ -229,6 +230,7 @@ def testValuesOfN(n: int):
             % (trainError, validationError)
         )
     )
+    
 
 
 ############################################################
@@ -248,4 +250,80 @@ def kmeans(
             final reconstruction loss)
     """
     # ### START CODE HERE ###
+    #---------------------High level explanation from the slides:---------------------
+    # K-means clustering: assign points to nearest center and update centers.
+    # Centers are initialized by sampling K examples.
+    # Distances are computed using expanded squared norm for efficiency, researched as:
+    #   ||x-c||^2 = ||x||^2 - 2<x,c> + ||c||^2
+    # Handles empty clusters by reassigning a random example as its center. To avoid division by zero.
+
+    # Set random seed for starting centers
+    random.seed(42)
+    n = len(examples)
+    #Select K random examples as initial centers
+    centers = random.sample(examples, K)
+    # Precompute example norms for efficiency and store initial assignments
+    exampleNorms = [dotProduct(x, x) for x in examples]
+    assignments = [-1] * n
+
+    ## ----------------------Main loop:-----------------------
+    # 1) Assignment step: assign each x_i to nearest center.
+    # 2) Check for convergence (assignments unchanged).
+    # 3) Update step: recompute centers as average of points in each cluster
+    for _ in range(maxEpochs):
+        centerNorms = [dotProduct(c, c) for c in centers]
+        newAssignments = []
+        totalCost = 0.0
+
+        # Assignment step
+        for i, x in enumerate(examples):
+            bestCluster = None
+            bestCost = None
+            for j, c in enumerate(centers):
+                cost = exampleNorms[i] - 2 * dotProduct(x, c) + centerNorms[j]
+                if bestCost is None or cost < bestCost:
+                    bestCost = cost
+                    bestCluster = j
+            newAssignments.append(bestCluster)
+            totalCost += bestCost
+
+        # Stop if converged
+        if newAssignments == assignments:
+            assignments = newAssignments
+            break
+        assignments = newAssignments
+
+        # Update centers
+        clusterSums = [defaultdict(float) for _ in range(K)]
+        counts = [0] * K
+        for x, z in zip(examples, assignments):
+            counts[z] += 1
+            for f, v in x.items():
+                clusterSums[z][f] += v
+
+        newCenters = []
+        for j in range(K):
+            #if a cluster is empty, reassign a random example as its center
+            if counts[j] == 0:
+                newCenters.append(random.choice(examples))
+                continue
+            inv = 1.0 / counts[j]
+            center = {}
+            for f, v in clusterSums[j].items():
+                val = v * inv
+                if val != 0:
+                    center[f] = val
+            newCenters.append(center)
+        centers = newCenters
+
+    # Final loss
+    centerNorms = [dotProduct(c, c) for c in centers]
+    totalCost = 0.0
+    # Compute final reconstruction loss once converged
+    for i, x in enumerate(examples):
+        j = assignments[i]
+        c = centers[j]
+        totalCost += exampleNorms[i] - 2 * dotProduct(x, c) + centerNorms[j]
+
+    return centers, assignments, totalCost
     # ### END CODE HERE ###
