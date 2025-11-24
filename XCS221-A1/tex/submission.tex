@@ -28,11 +28,16 @@ instructions to regenerate this handout with your typeset \LaTeX{} solutions.
 
 \LARGE
 1.e
+
+
 \normalsize
 
 % <SCPD_SUBMISSION_TAG>_1e
 \begin{answer}
   % ### START CODE HERE ###
+  1- The validation error is around 0.27 for word features and n-gram when n is around 7. This is due to the fact that with n-grams of size 7, the model can capture more context and semantic meaning from the text, which helps in better understanding. Smaller n-grams may miss important phrases, while larger n-grams may lead to sparsity issues. Therefore, n-grams of around 7 strike a good balance between capturing context and maintaining sufficient data for training.
+  
+  2- When a user writes a review with informal language like "Thiiis movie was suuuuuuuper scaaryyy!!!!" Because the review contains misspellings and stretched words (“Thiiis”, “suuuuuuuper”, “scaaryyy”), word features treat each as a completely new and unseen token, while character n-grams still capture the emotional patterns inside the words (e.g., “thi”, “hii”, “iii”, "iis"), and will still identify the word as positive or negative based on the presence of these patterns. Therefore, character n-grams are more robust to such variations in spelling and can better capture the sentiment of the review.
   % ### END CODE HERE ###
 \end{answer}
 % <SCPD_SUBMISSION_TAG>_1e
@@ -44,8 +49,128 @@ instructions to regenerate this handout with your typeset \LaTeX{} solutions.
 
 % <SCPD_SUBMISSION_TAG>_2a
 \begin{answer}
-  % ### START CODE HERE ###
-  % ### END CODE HERE ###
+% ### START CODE HERE ###
+
+We run K=2 means on the four points:
+\[
+x_1=(10,0),\;
+x_2=(30,0),\;
+x_3=(10,20),\;
+x_4=(20,20).
+\]
+
+\subsection*{Case (i): Initialization $\mu_1^{(0)} = (20,30)$, $\mu_2^{(0)} = (20,-10)$}
+
+\textbf{Step 1 (Set assignments).}
+
+For each point index $i = 1,\ldots,4$ we assign
+\[
+z_i^{(1)}
+=
+\arg\min_{k=1,2}
+\,\bigl\|\, x_i - \mu_k^{(0)} \,\bigr\|^2.
+\]
+
+Example (computing squared distances):
+\[
+\|x_1-\mu_1^{(0)}\|^2 = 1000,
+\qquad
+\|x_1-\mu_2^{(0)}\|^2 = 200.
+\]
+Thus
+\[
+z_1^{(1)} = 2.
+\]
+
+Similarly:
+\[
+z_2^{(1)} = 2,\quad
+z_3^{(1)} = 1,\quad
+z_4^{(1)} = 1.
+\]
+
+\textbf{Step 2 (Update of centroids).}
+
+Cluster 1 points: $x_3, x_4$  
+Cluster 2 points: $x_1, x_2$
+
+Cluster sizes:
+\[
+m_1 = 2,\qquad m_2 = 2.
+\]
+
+Updated centroids:
+\[
+\mu_1^{(1)}
+=
+\frac{1}{2}\bigl((10,20)+(20,20)\bigr)
+=
+(15,20),
+\]
+\[
+\mu_2^{(1)}
+=
+\frac{1}{2}\bigl((10,0)+(30,0)\bigr)
+=
+(20,0).
+\]
+
+\textbf{Second iteration.}
+
+\[
+z_1^{(2)} = 2,\quad
+z_2^{(2)} = 2,\quad
+z_3^{(2)} = 1,\quad
+z_4^{(2)} = 1.
+\]
+
+Final centroids:
+\[
+\mu_1^{(*)} = (15,20),\qquad
+\mu_2^{(*)} = (20,0).
+\]
+
+
+\subsection*{Case (ii): Initialization $\mu_1^{(0)} = (0,10)$, $\mu_2^{(0)} = (30,20)$}
+
+\textbf{Step 1 (Assignments).}
+
+\[
+z_1^{(1)} = 1,\;
+z_2^{(1)} = 2,\;
+z_3^{(1)} = 1,\;
+z_4^{(1)} = 2.
+\]
+
+\textbf{Step 2 (Update).}
+
+\[
+m_1 = 2,\qquad m_2 = 2.
+\]
+
+\[
+\mu_1^{(1)}=\frac{1}{2}\bigl((10,0)+(10,20)\bigr)=(10,10),
+\qquad
+\mu_2^{(1)}=\frac{1}{2}\bigl((30,0)+(20,20)\bigr)=(25,10).
+\]
+
+\textbf{Final iteration.}
+
+\[
+z_1=1,\;
+z_2=2,\;
+z_3=1,\;
+z_4=2.
+\]
+
+\[
+\mu_1^{(*)}=(10,10),
+\qquad
+\mu_2^{(*)}=(25,10).
+\]
+
+% ### END CODE HERE ###
+
 \end{answer}
 % <SCPD_SUBMISSION_TAG>_2a
 \clearpage
