@@ -28,12 +28,17 @@ def valueIteration(succAndRewardProb: Dict[Tuple[StateT, ActionT], List[Tuple[St
         # Return Q(state, action) based on V(state)
         pass
         # ### START CODE HERE ###
+        return sum(prob * (reward + discount * V[nextState]) for nextState, prob, reward in succAndRewardProb[(state, action)])
         # ### END CODE HERE ###
 
     def computePolicy(V: Dict[StateT, float]) -> Dict[StateT, ActionT]:
         # Return the policy given V.
         pass
         # ### START CODE HERE ###
+        return {
+            state: max(actions, key=lambda action: computeQ(V, state, action))
+            for state, actions in stateActions.items()
+        }
         # ### END CODE HERE ###
 
     print('Running valueIteration...')
@@ -44,9 +49,16 @@ def valueIteration(succAndRewardProb: Dict[Tuple[StateT, ActionT], List[Tuple[St
         # update V values using the computeQ function above.
         # repeat until the V values for all states converge (changes between iterations are less than epsilon).
         # ### START CODE HERE ###
-        # ### END CODE HERE ###
-        V = newV
+        delta = 0
+        for state, actions in stateActions.items():
+            newV[state] = max(computeQ(V, state, action) for action in actions)
+            delta = max(delta, abs(newV[state] - V[state]))
+
         numIters += 1
+        V = newV
+        if delta < epsilon:
+            break
+        # ### END CODE HERE ###
     V_opt = V
     print(("valueIteration: %d iterations" % numIters))
     return computePolicy(V_opt)
@@ -105,6 +117,12 @@ class ModelBasedMonteCarlo(util.RLAlgorithm):
         elif self.numIters > 1e6: # Lower the exploration probability by a logarithmic factor.
             explorationProb = explorationProb / math.log(self.numIters - 100000 + 1)
         # ### START CODE HERE ###
+        if not explore:
+            return self.pi.get(state, random.choice(self.actions))
+
+        if random.random() < explorationProb or state not in self.pi:
+            return random.choice(self.actions)
+        return self.pi[state]
         # ### END CODE HERE ###
 
     # We will call this function with (s, a, r, s'), which is used to update tCounts and rTotal.
@@ -119,6 +137,16 @@ class ModelBasedMonteCarlo(util.RLAlgorithm):
             # Then run valueIteration and update self.pi.
             succAndRewardProb = defaultdict(list)
             # ### START CODE HERE ###
+            for (s, a), nextStates in self.tCounts.items():
+                total = sum(nextStates.values())
+                if total == 0:
+                    continue
+                for ns, ct in nextStates.items():
+                    prob = ct / total
+                    avgReward = self.rTotal[(s, a)][ns] / ct
+                    succAndRewardProb[(s, a)].append((ns, prob, avgReward))
+
+            self.pi = valueIteration(succAndRewardProb, self.discount)
             # ### END CODE HERE ###
 
 ############################################################
@@ -155,6 +183,12 @@ class TabularQLearning(util.RLAlgorithm):
             explorationProb = explorationProb / math.log(self.numIters - 100000 + 1)
 
         # ### START CODE HERE ###
+        if not explore:
+            return max(self.actions, key=lambda a: self.Q[(state, a)])
+
+        if random.random() < explorationProb:
+            return random.choice(self.actions)
+        return max(self.actions, key=lambda a: self.Q[(state, a)])
         # ### END CODE HERE ###
 
     # Call this function to get the step size to update the Q-values.
@@ -165,8 +199,11 @@ class TabularQLearning(util.RLAlgorithm):
     # Note that if s' is a terminal state, then terminal will be True.  Remember to check for this.
     # You should update the Q values using self.getStepSize()
     def incorporateFeedback(self, state: StateT, action: ActionT, reward: float, nextState: StateT, terminal: bool) -> None:
-        pass
         # ### START CODE HERE ###
+        step = self.getStepSize()
+        future = 0 if terminal else max(self.Q[(nextState, a)] for a in self.actions)
+        target = reward + self.discount * future
+        self.Q[(state, action)] += step * (target - self.Q[(state, action)])
         # ### END CODE HERE ###
 
 ############################################################
@@ -196,6 +233,13 @@ def fourierFeatureExtractor(
     # doing efficient arithmetic broadcasting in numpy.
 
     # ### START CODE HERE ###
+    state = np.array(state, dtype=float)
+    scale = np.array(scale, dtype=float)
+
+    coeff_shape = (maxCoeff + 1,) * len(state)
+    grid = np.indices(coeff_shape).reshape(len(state), -1).T  # shape: (num_features, dim)
+    projections = grid @ (state * scale)
+    features = np.cos(np.pi * projections)
     # ### END CODE HERE ###
 
     return features
@@ -224,6 +268,9 @@ class FunctionApproxQLearning(util.RLAlgorithm):
     def getQ(self, state: np.ndarray, action: int) -> float:
         pass
         # ### START CODE HERE ###
+        features = self.featureExtractor(state, action)
+        weights_for_action = self.W[:, action]
+        return float(np.dot(features, weights_for_action))
         # ### END CODE HERE ###
 
     # This algorithm will produce an action given a state.
@@ -242,6 +289,13 @@ class FunctionApproxQLearning(util.RLAlgorithm):
             explorationProb = explorationProb / math.log(self.numIters - 100000 + 1)
 
         # ### START CODE HERE ###
+        if not explore:
+            return max(self.actions, key=lambda act: self.getQ(state, act))
+
+        if random.random() < explorationProb:
+            return random.choice(self.actions)
+
+        return max(self.actions, key=lambda act: self.getQ(state, act))
         # ### END CODE HERE ###
 
     # Call this function to get the step size to update the weights.
@@ -254,6 +308,19 @@ class FunctionApproxQLearning(util.RLAlgorithm):
     def incorporateFeedback(self, state: np.ndarray, action: int, reward: float, nextState: np.ndarray, terminal: bool) -> None:
         pass
         # ### START CODE HERE ###
+        step_size = self.getStepSize()
+        features = self.featureExtractor(state, action)
+
+        if terminal:
+            future_value = 0.0
+        else:
+            future_value = max(self.getQ(nextState, act) for act in self.actions)
+
+        target = reward + self.discount * future_value
+        prediction = self.getQ(state, action)
+        td_error = target - prediction
+
+        self.W[:, action] += step_size * td_error * features
         # ### END CODE HERE ###
 
 ############################################################
@@ -286,6 +353,27 @@ class ConstrainedQLearning(FunctionApproxQLearning):
             explorationProb = explorationProb / math.log(self.numIters - 100000 + 1)
 
         # ### START CODE HERE ###
+        def is_valid(action: int) -> bool:
+            if self.max_speed is None:
+                return True
+
+            position, velocity = state
+            acceleration = (action - 1) * self.force - self.gravity * math.cos(3 * position)
+            next_velocity = velocity + acceleration
+            return abs(next_velocity) <= self.max_speed
+
+        valid_actions = [a for a in self.actions if is_valid(a)]
+
+        if not valid_actions:
+            return random.choice(self.actions)
+
+        if not explore:
+            return max(valid_actions, key=lambda a: self.getQ(state, a))
+
+        if random.random() < explorationProb:
+            return random.choice(valid_actions)
+
+        return max(valid_actions, key=lambda a: self.getQ(state, a))
         # ### END CODE HERE ###
 
 ############################################################
