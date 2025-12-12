@@ -49,11 +49,13 @@ def valueIteration(succAndRewardProb: Dict[Tuple[StateT, ActionT], List[Tuple[St
         # update V values using the computeQ function above.
         # repeat until the V values for all states converge (changes between iterations are less than epsilon).
         # ### START CODE HERE ###
+        # Use of a delta to detect convergence.
         delta = 0
         for state, actions in stateActions.items():
+            # We compute the new V value for this state as the maximum Q value over all possible actions.
+            # Then we update delta to be the maximum change seen so far.
             newV[state] = max(computeQ(V, state, action) for action in actions)
             delta = max(delta, abs(newV[state] - V[state]))
-
         numIters += 1
         V = newV
         if delta < epsilon:
@@ -117,9 +119,9 @@ class ModelBasedMonteCarlo(util.RLAlgorithm):
         elif self.numIters > 1e6: # Lower the exploration probability by a logarithmic factor.
             explorationProb = explorationProb / math.log(self.numIters - 100000 + 1)
         # ### START CODE HERE ###
+        # Return the action to take in the given state.
         if not explore:
             return self.pi.get(state, random.choice(self.actions))
-
         if random.random() < explorationProb or state not in self.pi:
             return random.choice(self.actions)
         return self.pi[state]
@@ -137,13 +139,17 @@ class ModelBasedMonteCarlo(util.RLAlgorithm):
             # Then run valueIteration and update self.pi.
             succAndRewardProb = defaultdict(list)
             # ### START CODE HERE ###
+            # Build succAndRewardProb from tCounts and rTotal.
             for (s, a), nextStates in self.tCounts.items():
                 total = sum(nextStates.values())
+                # Skip state-action pairs we have never seen.
                 if total == 0:
                     continue
+                # For each possible next state, compute the transition probability and average reward.
+                # ns = next state, ct = count of transitions to ns
                 for ns, ct in nextStates.items():
                     prob = ct / total
-                    avgReward = self.rTotal[(s, a)][ns] / ct
+                    avgReward = self.rTotal[(s, a)][ns] / ct # average reward for this transition
                     succAndRewardProb[(s, a)].append((ns, prob, avgReward))
 
             self.pi = valueIteration(succAndRewardProb, self.discount)
