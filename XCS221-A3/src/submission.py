@@ -239,6 +239,7 @@ def fourierFeatureExtractor(
     # doing efficient arithmetic broadcasting in numpy.
 
     # ### START CODE HERE ###
+    # Convert state and scale to numpy arrays for easier manipulation.
     state = np.array(state, dtype=float)
     scale = np.array(scale, dtype=float)
 
