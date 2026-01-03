@@ -216,8 +216,8 @@ class MinimaxAgent(MultiAgentSearchAgent):
       if score > bestScore:
         bestScore = score
         bestAction = action
-    #Print to check the chosen depth and score, and if it matches expected values. Best action added for clarity. 
-    print("depth", self.depth, "bestScore", bestScore, "bestAction", bestAction)
+    # Print minimax value for the initial state 
+    #print(f"Minimax value at depth {self.depth}: {bestScore} (action: {bestAction})")
     return bestAction
     # ### END CODE HERE ###
 
@@ -279,6 +279,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         return value
 
     bestScore = float('-inf')
+    # Default to STOP so we have a valid move if there are no legal actions at the beginning.
     bestAction = Directions.STOP
     alpha = float('-inf')
     beta = float('inf')
@@ -291,6 +292,8 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         bestAction = action
       alpha = max(alpha, bestScore)
 
+    # Print minimax/alpha-beta value for the initial state to verify expected depths (e.g., 9, 18, 27, 36 for depths 1–4).
+    print(f"AlphaBeta value at depth {self.depth}: {bestScore} (action: {bestAction})")
     return bestAction
     # ### END CODE HERE ###
 
