@@ -170,30 +170,34 @@ class MinimaxAgent(MultiAgentSearchAgent):
       # Terminal test: win/lose or depth reached before Pacman's move
       if state.isWin() or state.isLose() or (depth == self.depth and agentIndex == 0):
         return self.evaluationFunction(state)
-
+      # Get number of agents and legal actions and check for no legal actions
       numAgents = state.getNumAgents()
       legalActions = state.getLegalActions(agentIndex)
-
       if not legalActions:
         return self.evaluationFunction(state)
 
       # Compute next agent index and depth
       def next_agent_info(agentIndex, depth):
         nextIndex = (agentIndex + 1) % numAgents
-        nextDepth = depth + 1 if nextIndex == 0 else depth
+        if nextIndex == 0:
+          nextDepth = depth + 1
+        else:
+          nextDepth = depth
         return nextIndex, nextDepth
 
       if agentIndex == 0:
-        # Pacman maximizes the score
-        bestValue = float('-inf')
+        # The agent is Pacman if agentIndex == 0, maximizes the score. We start with negative infinity to ensure any value found is higher.
+        bestValue = float('-inf') # Initialize to negative infinity
         for action in legalActions:
           successor = state.generateSuccessor(agentIndex, action)
+          # Next agent index and depth define the distance in the tree, which is part of 
+          # the input to the minimax function. Vminimax (successor, d = nextIndex, nextDepth) 
           nextIndex, nextDepth = next_agent_info(agentIndex, depth)
           value = minimax(successor, nextIndex, nextDepth)
           bestValue = max(bestValue, value)
         return bestValue
       else:
-        # Ghosts minimize the score
+        # The agents are Ghosts, minimize the score. We start with positive infinity to ensure any value found is lower.
         bestValue = float('inf')
         for action in legalActions:
           successor = state.generateSuccessor(agentIndex, action)
@@ -240,10 +244,13 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
 
       if not legalActions:
         return self.evaluationFunction(state)
-
+      #Same next_agent_info function as in minimax
       def next_agent_info(agentIndex, depth):
         nextIndex = (agentIndex + 1) % numAgents
-        nextDepth = depth + 1 if nextIndex == 0 else depth
+        if nextIndex == 0:
+          nextDepth = depth + 1
+        else:
+          nextDepth = depth 
         return nextIndex, nextDepth
 
       if agentIndex == 0:
@@ -251,6 +258,10 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         for action in legalActions:
           successor = state.generateSuccessor(agentIndex, action)
           nextIndex, nextDepth = next_agent_info(agentIndex, depth)
+          #In alpha-beta pruning, we update the value and check against beta to prune branches.
+          #Beta represents the minimum score that the minimizing player is assured.
+          #Alpha, on the other side, is the maximum score that the maximizing player is assured.
+          #The condition to prune is when the maximizing player's best option (value) exceeds the minimizing player's best option (beta). So if Alpha > = beta, we can prune the remaining branches.
           value = max(value, alphabeta(successor, nextIndex, nextDepth, alpha, beta))
           if value > beta:
             return value
