@@ -208,10 +208,12 @@ class MinimaxAgent(MultiAgentSearchAgent):
 
     # Choose the action that maximizes the minimax value
     bestScore = float('-inf')
-    # Default to STOP so we have a valid move if there are no legal actions (e.g., terminal state).
+    # Default to STOP so we have a valid move if there are no legal actions (e.g., terminal state)
+    # and iterate over the legal actionso of Pacman.
     bestAction = Directions.STOP
     for action in gameState.getLegalActions(0):
       successor = gameState.generateSuccessor(0, action)
+      #Minimax is called recursively to update the score for each action.
       score = minimax(successor, 1 % gameState.getNumAgents(), 0)
       if score > bestScore:
         bestScore = score
@@ -236,12 +238,13 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
     pass
     # ### START CODE HERE ###
     def alphabeta(state, agentIndex, depth, alpha, beta):
+      #First, we perform the terminal test to check if the game state is a win or lose state, or if we have reached the maximum depth for Pacman's move.
       if state.isWin() or state.isLose() or (depth == self.depth and agentIndex == 0):
         return self.evaluationFunction(state)
-
+      #Then, we get the number of agents and the legal actions for the current agent. 
+      #If there are no legal actions, we return the evaluation function for the current state.
       numAgents = state.getNumAgents()
       legalActions = state.getLegalActions(agentIndex)
-
       if not legalActions:
         return self.evaluationFunction(state)
       #Same next_agent_info function as in minimax
@@ -253,7 +256,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
           nextDepth = depth 
         return nextIndex, nextDepth
 
-      if agentIndex == 0:
+      if agentIndex == 0: #If Pacman, maximize the score
         value = float('-inf')
         for action in legalActions:
           successor = state.generateSuccessor(agentIndex, action)
@@ -261,17 +264,20 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
           #In alpha-beta pruning, we update the value and check against beta to prune branches.
           #Beta represents the minimum score that the minimizing player is assured.
           #Alpha, on the other side, is the maximum score that the maximizing player is assured.
-          #The condition to prune is when the maximizing player's best option (value) exceeds the minimizing player's best option (beta). So if Alpha > = beta, we can prune the remaining branches.
+          #The condition to prune is when the maximizing player's best option (value) exceeds the minimizing player's best option (beta). 
+          #So if Alpha > = beta, we can prune the remaining branches. Is lik if Alpha is the floor and beta the ceiling.
+          #The ceiling cannot be lower than the floor, so we can prune.
           value = max(value, alphabeta(successor, nextIndex, nextDepth, alpha, beta))
           if value > beta:
             return value
           alpha = max(alpha, value)
         return value
       else:
-        value = float('inf')
+        value = float('inf') #Otherwise, minimize the score for ghosts
         for action in legalActions:
           successor = state.generateSuccessor(agentIndex, action)
           nextIndex, nextDepth = next_agent_info(agentIndex, depth)
+          #We call alphabeta recursively here for each successor to update the value and check against alpha to prune branches.
           value = min(value, alphabeta(successor, nextIndex, nextDepth, alpha, beta))
           if value < alpha:
             return value
@@ -281,9 +287,10 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
     bestScore = float('-inf')
     # Default to STOP so we have a valid move if there are no legal actions at the beginning.
     bestAction = Directions.STOP
+    #In this case, we initialize alpha and beta for the root node, being alpha the lowest possible value and beta the highest possible value.
     alpha = float('-inf')
     beta = float('inf')
-
+    # Iteration over Pacman's legal actions to find the best action using alpha-beta pruning.
     for action in gameState.getLegalActions(0):
       successor = gameState.generateSuccessor(0, action)
       score = alphabeta(successor, 1 % gameState.getNumAgents(), 0, alpha, beta)
@@ -323,22 +330,27 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
 
       if not legalActions:
         return self.evaluationFunction(state)
-
+      # same next_agent_info function as in minimax and alpha-beta
       def next_agent_info(agentIndex, depth):
         nextIndex = (agentIndex + 1) % numAgents
         nextDepth = depth + 1 if nextIndex == 0 else depth
         return nextIndex, nextDepth
 
-      if agentIndex == 0:
+      if agentIndex == 0: #If Pacman, maximize the score
         value = float('-inf')
         for action in legalActions:
           successor = state.generateSuccessor(agentIndex, action)
           nextIndex, nextDepth = next_agent_info(agentIndex, depth)
+          # It calls expectimax recursively for each successor state and updates the value to 
+          # be the maximum of the current value and the value returned by the recursive call.
           value = max(value, expectimax(successor, nextIndex, nextDepth))
         return value
-      else:
+      else: #otherwise, calculate the expected value for ghosts, but instead of minimizing
+            # we calculate the average score based on the probability of each action.
         total = 0.0
         nextIndex, nextDepth = None, None
+        #Differently to minimax, expectimax assumes that ghosts choose their actions uniformly at random.
+        #Meaning that they move taking into account a probability distribution where each legal action has an equal chance of being selected.
         probability = 1.0 / len(legalActions)
         for action in legalActions:
           successor = state.generateSuccessor(agentIndex, action)
