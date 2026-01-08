@@ -358,14 +358,10 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
           total += probability * expectimax(successor, nextIndex, nextDepth)
         return total
 
-    legalActions = gameState.getLegalActions(0)
-    if not legalActions:
-      return Directions.STOP
-
     bestScore = float('-inf')
-    bestAction = legalActions[0]
+    bestAction = Directions.STOP
 
-    for action in legalActions:
+    for action in gameState.getLegalActions(0):
       successor = gameState.generateSuccessor(0, action)
       score = expectimax(successor, 1 % gameState.getNumAgents(), 0)
       if score > bestScore:
@@ -399,16 +395,15 @@ def betterEvaluationFunction(currentGameState):
   score = currentGameState.getScore()
 
   # Food features to encourage eating food and getting closer to it as objective. 
-  #Constants have been adjusted to balance the different features by trial and error and testing.
   if food:
     # Find the distance to the closest food using manhattan distance: means of distance in a grid-based path.
     foodDistances = [manhattanDistance(position, f) for f in food]
     closestFood = min(foodDistances)
-    score += 1.8 / (closestFood + 1.0) #smaller distance to food increases score
-    score -= 0.8 * len(food) #fewer remaining food increases score
+    score += 1.5 / (closestFood + 1.0) #smaller distance to food increases score
+    score -= 0.5 * len(food) #fewer remaining food increases score
 
   # Normal food does not have as much weight as capsules, so we penalize remaining capsules more heavily.
-  score -= 2.2 * len(capsules)
+  score -= 2.0 * len(capsules)
 
   # Ghost features
   for ghost in ghostStates:
@@ -416,11 +411,12 @@ def betterEvaluationFunction(currentGameState):
     distance = manhattanDistance(position, ghostPos)
     if ghost.scaredTimer > 0:
       # Encourage chasing scared ghosts that are near
-      score += 2.5 * ghost.scaredTimer / (distance + 1.0)
+      score += 2.0 * ghost.scaredTimer / (distance + 1.0)
     else:
       # Penalize proximity to active ghosts
       if distance > 0:
-        score -= 5.0 / distance
+        score -= 4.0 / distance
+
   return score
   # ### END CODE HERE ###
 
