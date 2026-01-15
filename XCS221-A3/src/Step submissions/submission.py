@@ -122,13 +122,8 @@ class ModelBasedMonteCarlo(util.RLAlgorithm):
         # Return the action to take in the given state.
         if not explore:
             return self.pi.get(state, random.choice(self.actions))
-        # If we don't have a policy for this state, return a random action.
-        if state not in self.pi:
+        if random.random() < explorationProb or state not in self.pi:
             return random.choice(self.actions)
-
-        if random.random() < explorationProb:
-            return random.choice(self.actions)
-
         return self.pi[state]
         # ### END CODE HERE ###
 
@@ -196,6 +191,7 @@ class TabularQLearning(util.RLAlgorithm):
         # ### START CODE HERE ###
         if not explore:
             return max(self.actions, key=lambda a: self.Q[(state, a)])
+
         if random.random() < explorationProb:
             return random.choice(self.actions)
         return max(self.actions, key=lambda a: self.Q[(state, a)])
@@ -209,8 +205,8 @@ class TabularQLearning(util.RLAlgorithm):
     # Note that if s' is a terminal state, then terminal will be True.  Remember to check for this.
     # You should update the Q values using self.getStepSize()
     def incorporateFeedback(self, state: StateT, action: ActionT, reward: float, nextState: StateT, terminal: bool) -> None:
+        pass
         # ### START CODE HERE ###
-        # Update Q(state, action) based on the (state, action, reward, nextState, terminal) tuple.
         step = self.getStepSize()
         future = 0 if terminal else max(self.Q[(nextState, a)] for a in self.actions)
         target = reward + self.discount * future
@@ -244,10 +240,9 @@ def fourierFeatureExtractor(
     # doing efficient arithmetic broadcasting in numpy.
 
     # ### START CODE HERE ###
-    # Convert state and scale to numpy arrays for easier manipulation.
     state = np.array(state, dtype=float)
     scale = np.array(scale, dtype=float)
-    # Create a grid of coefficient combinations.
+
     coeff_shape = (maxCoeff + 1,) * len(state)
     grid = np.indices(coeff_shape).reshape(len(state), -1).T  # shape: (num_features, dim)
     projections = grid @ (state * scale)
@@ -280,6 +275,7 @@ class FunctionApproxQLearning(util.RLAlgorithm):
     def getQ(self, state: np.ndarray, action: int) -> float:
         pass
         # ### START CODE HERE ###
+        # Compute Q(state, action) as a dot product of features and weights.
         features = self.featureExtractor(state, action)
         weights_for_action = self.W[:, action]
         return float(np.dot(features, weights_for_action))
@@ -301,12 +297,13 @@ class FunctionApproxQLearning(util.RLAlgorithm):
             explorationProb = explorationProb / math.log(self.numIters - 100000 + 1)
 
         # ### START CODE HERE ###
+        # Return the action to take in the given state.
         if not explore:
             return max(self.actions, key=lambda act: self.getQ(state, act))
-
+        # return a random action with probability explorationProb
         if random.random() < explorationProb:
             return random.choice(self.actions)
-
+        # Select the action with the highest Q value.
         return max(self.actions, key=lambda act: self.getQ(state, act))
         # ### END CODE HERE ###
 
@@ -322,7 +319,7 @@ class FunctionApproxQLearning(util.RLAlgorithm):
         # ### START CODE HERE ###
         step_size = self.getStepSize()
         features = self.featureExtractor(state, action)
-        # Compute the target value. For terminal states, future value is 0, otherwise it's the max Q value for nextState.
+        # Compute the target value.
         if terminal:
             future_value = 0.0
         else:
@@ -331,7 +328,7 @@ class FunctionApproxQLearning(util.RLAlgorithm):
         target = reward + self.discount * future_value
         prediction = self.getQ(state, action)
         td_error = target - prediction
-
+        # Update weights for the taken action.
         self.W[:, action] += step_size * td_error * features
         # ### END CODE HERE ###
 
@@ -365,28 +362,6 @@ class ConstrainedQLearning(FunctionApproxQLearning):
             explorationProb = explorationProb / math.log(self.numIters - 100000 + 1)
 
         # ### START CODE HERE ###
-        # Check which actions are valid given the max speed constraint.
-        def is_valid(action: int) -> bool:
-            if self.max_speed is None:
-                return True
-            # Compute the next velocity given the action. 
-            position, velocity = state
-            acceleration = (action - 1) * self.force - self.gravity * math.cos(3 * position)
-            next_velocity = velocity + acceleration
-            return abs(next_velocity) <= self.max_speed
-
-        valid_actions = [a for a in self.actions if is_valid(a)]
-        # Check if there are no valid actions or exploration is disabled.
-        if not valid_actions:
-            return random.choice(self.actions)
-
-        if not explore:
-            return max(valid_actions, key=lambda a: self.getQ(state, a))
-
-        if random.random() < explorationProb:
-            return random.choice(valid_actions)
-        # return the best valid action.
-        return max(valid_actions, key=lambda a: self.getQ(state, a))
         # ### END CODE HERE ###
 
 ############################################################

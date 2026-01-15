@@ -12,8 +12,17 @@ def create_chain_csp(n):
     csp = util.CSP()
     # Problem 0c
     # ### START CODE HERE ###
+    # csp.add_variable(...) is used to add variables to the CSP, adding variable and its domain
+    # csp.add_binary_factor(...) is used to add binary factors between two variables (current_var and next_var)
+    for var in variables:
+        csp.add_variable(var, domain)
+    for i in range(n - 1):
+        current_var = variables[i]
+        next_var = variables[i + 1]
+        csp.add_binary_factor(current_var, next_var, lambda x, y: x != y)
     # ### END CODE HERE ###
     return csp
+    #we return the constructed csp
 
 
 ############################################################
@@ -32,6 +41,20 @@ def create_nqueens_csp(n = 8):
     csp = util.CSP()
     # Problem 1a
     # ### START CODE HERE ###
+    domain = list(range(n))
+
+    for col in range(n):
+        var = 'Q%d' % col
+        csp.add_variable(var, domain)
+
+    for col1 in range(n):
+        for col2 in range(col1 + 1, n):
+            var1 = 'Q%d' % col1
+            var2 = 'Q%d' % col2
+            col_diff = abs(col1 - col2)
+            def is_valid(row1, row2, diff=col_diff):
+                return row1 != row2 and abs(row1 - row2) != diff
+            csp.add_binary_factor(var1, var2, is_valid)
     # ### END CODE HERE ###
     return csp
 
@@ -231,6 +254,21 @@ class BacktrackingSearch():
             # Hint: for ties, choose the variable with lowest index in self.csp.variables
             pass
             # ### START CODE HERE ###
+            # We iterate through all variables to find the most constrained one and initialize best_var and best_count to None
+            best_var = None
+            best_count = None
+            for var in self.csp.variables:
+                if var in assignment:
+                    continue
+                count = 0
+                for val in self.domains[var]:
+                    if self.get_delta_weight(assignment, var, val) > 0:
+                        count += 1
+                # We update best_var and best_count if we find a variable with fewer valid values
+                if best_count is None or count < best_count:
+                    best_count = count
+                    best_var = var
+            return best_var
             # ### END CODE HERE ###
 
     def arc_consistency_check(self, var):
@@ -280,6 +318,7 @@ def get_sum_variable(csp, name, variables, maxSum):
         [0, maxSum] such that it's consistent with an assignment of |n|
         iff the assignment of |variables| sums to |n|.
     """
+    # Not for problem 1b. 1b is solved above. A bit confusing not to include here for which problem this is. 
     pass
     # ### START CODE HERE ###
     # ### END CODE HERE ###
