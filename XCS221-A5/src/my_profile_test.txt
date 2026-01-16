@@ -1,0 +1,17 @@
+# This is the range of units that I decide to take. 
+minUnits 6
+maxUnits 9
+
+#The quarters that I´d register (this is an orientative example, I am not familiar with the US or Stanford)
+register Win2018
+register Spr2018
+
+# Winter 2018
+request CS105 in Win2018
+request CS149 in Win2018
+request CS109L in Win2018
+
+# Spring 2018
+request CS101 in Spr2018
+request CS178 in Spr2018
+request CS181W in Spr2018
