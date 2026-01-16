@@ -537,15 +537,17 @@ class SchedulingCSPConstructor():
         #         be enforced by the constraints added by add_quarter_constraints
         pass
         # ### START CODE HERE ###
+        # First we create a helper function make_unit_factor that returns a function unit_factor, that will be used as a
+        # binary factor between the request variable and the unit variable.
         def make_unit_factor(target, min_u, max_u):
             def unit_factor(chosen_cid, units):
                 if chosen_cid == target:
                     return units != 0 and min_u <= units <= max_u
                 return units == 0
             return unit_factor
-
+        #Then we create a dictionary quarter_unit_vars to store the unit variables for each quarter and initialize it with empty lists
         quarter_unit_vars = {quarter: [] for quarter in self.profile.quarters}
-
+        #After this we iterate over all requests in the profile to create unit variables for each course id in the request
         for request in self.profile.requests:
             for cid in request.cids:
                 course = self.bulletin.courses[cid]
@@ -555,9 +557,11 @@ class SchedulingCSPConstructor():
                     csp.add_variable(unit_var, unit_domain)
                     quarter_unit_vars[quarter].append(unit_var)
                     request_var = (request, quarter)
+                    # Finally adding the binary factor between the request variable and the unit variable using the make_unit_factor function created above. 
                     unit_factor = make_unit_factor(cid, course.minUnits, course.maxUnits)
                     csp.add_binary_factor(request_var, unit_var, unit_factor)
-
+        # By using get_sum_variable here, we create sum variables for each quarter to represent the total units taken in that quarter 
+        # Then we add unary factors to enforce the total units to be within minUnits and maxUnits
         for quarter in self.profile.quarters:
             sum_var = get_sum_variable(
                 csp,
