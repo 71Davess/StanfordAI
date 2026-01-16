@@ -319,8 +319,42 @@ def get_sum_variable(csp, name, variables, maxSum):
         iff the assignment of |variables| sums to |n|.
     """
     # Not for problem 1b. 1b is solved above. A bit confusing not to include here for which problem this is. 
+
+    #Problem 2b
     pass
     # ### START CODE HERE ###
+    #First we create the domain for the sum variable which is from 0 to maxSum, then if the variables list is empty we create a sum variable with value 0 and return it
+    sum_domain = list(range(maxSum + 1))
+    if len(variables) == 0:
+        result = ('sum', name, 0)
+        csp.add_variable(result, sum_domain)
+        csp.add_unary_factor(result, lambda v: v == 0)
+        return result
+    #Otherwise, we create sum variables for each variable in the list plus one extra for the initial sum of 0
+    sum_vars = []
+    for i in range(len(variables) + 1):
+        sum_var = ('sum', name, i)
+        csp.add_variable(sum_var, sum_domain)
+        sum_vars.append(sum_var)
+    # By default, the first sum variable should be 0
+    csp.add_unary_factor(sum_vars[0], lambda v: v == 0)
+    # In here, we create pair variables to connect each variable with the sum variables. This could also be a dictionary but we use a tuple for simplicity.
+    for i, var in enumerate(variables):
+        pair_var = ('sum', name, 'pair', i)
+        pair_domain = []
+        for partial_sum in sum_domain:
+            for val in csp.values[var]:
+                if partial_sum + val <= maxSum:
+                    pair_domain.append((partial_sum, val))
+        csp.add_variable(pair_var, pair_domain)
+        #In the following lines we add the binary factors to connect the sum variables, pair variables and original variables to get them all consistent. 
+        csp.add_binary_factor(sum_vars[i], pair_var, lambda s, pair: pair[0] == s)
+        csp.add_binary_factor(var, pair_var, lambda v, pair: pair[1] == v)
+        csp.add_binary_factor(pair_var, sum_vars[i + 1], \
+            lambda pair, s_next: pair[0] + pair[1] == s_next)
+    #Finally we return the last sum variable which contains the total sum of all variables.
+    result = sum_vars[-1]
+    return result
     # ### END CODE HERE ###
 
 # importing get_or_variable helper function from util
@@ -414,6 +448,17 @@ class SchedulingCSPConstructor():
         #Hint: If a request doesn't specify the quarter(s), do nothing.
         pass
         # ### START CODE HERE ###
+        #first we iterate over all requests in the profile
+        #profile is an object of StudentProfile class that contains all requests and quarters
+        for request in self.profile.requests:
+            #if the length of quarters in the request is 0, we continue to the next request meaning we do nothing
+            if len(request.quarters) == 0:
+                continue
+            #we iterate over all quarters in the profile and if the quarter is not in the request's quarters, we add a unary factor to the csp
+            for quarter in self.profile.quarters:
+                if quarter in request.quarters:
+                    continue
+                csp.add_unary_factor((request, quarter), lambda cid: cid is None)
         # ### END CODE HERE ###
 
     def add_request_weights(self, csp):
@@ -492,6 +537,67 @@ class SchedulingCSPConstructor():
         #         be enforced by the constraints added by add_quarter_constraints
         pass
         # ### START CODE HERE ###
+        def make_unit_factor(target, min_u, max_u):
+            def unit_factor(chosen_cid, units):
+                if chosen_cid == target:
+                    return units != 0 and min_u <= units <= max_u
+                return units == 0
+            return unit_factor
+
+        quarter_unit_vars = {quarter: [] for quarter in self.profile.quarters}
+
+        for request in self.profile.requests:
+            for cid in request.cids:
+                course = self.bulletin.courses[cid]
+                unit_domain = [0] + list(range(course.minUnits, course.maxUnits + 1))
+                for quarter in self.profile.quarters:
+                    unit_var = (cid, quarter)
+                    csp.add_variable(unit_var, unit_domain)
+                    quarter_unit_vars[quarter].append(unit_var)
+                    request_var = (request, quarter)
+                    unit_factor = make_unit_factor(cid, course.minUnits, course.maxUnits)
+                    csp.add_binary_factor(request_var, unit_var, unit_factor)
+
+        for quarter in self.profile.quarters:
+            sum_var = get_sum_variable(
+                csp,
+                ('total_units', quarter),
+                quarter_unit_vars[quarter],
+                self.profile.maxUnits,
+            )
+            csp.add_unary_factor(
+                sum_var,
+                lambda total, min_u=self.profile.minUnits, max_u=self.profile.maxUnits: \
+                    min_u <= total <= max_u,
+            )
+
+        # Reorder variables to prune unit sums earlier without extra heuristics.
+        request_vars = []
+        for var in csp.variables:
+            if not isinstance(var, tuple):
+                continue
+            if len(var) != 2:
+                continue
+            if not isinstance(var[0], util.Request):
+                continue
+            request_vars.append(var)
+        new_order = list(request_vars)
+        # In this part, we reorder the variables in the csp to have the sum variables and pair variables before the unit variables for each quarter
+        for quarter in self.profile.quarters:
+            unit_vars = quarter_unit_vars[quarter]
+            sum_name = ('total_units', quarter)
+            sum_vars = [('sum', sum_name, i) for i in range(len(unit_vars) + 1)]
+            # and we append them to the new order list
+            for i, unit_var in enumerate(unit_vars):
+                pair_var = ('sum', sum_name, 'pair', i)
+                new_order.append(sum_vars[i])
+                new_order.append(pair_var)
+                new_order.append(unit_var)
+            new_order.append(sum_vars[-1])
+        for var in csp.variables:
+            if var not in new_order:
+                new_order.append(var)
+        csp.variables = new_order
         # ### END CODE HERE ###
 
     def add_all_additional_constraints(self, csp):
